@@ -1,0 +1,185 @@
+import numpy as np
+import csv
+from sklearn import tree
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+
+
+class node():
+
+    def __init__(self, X, y, parentcal):
+        self.children = []
+        self.yValue = y
+        self.data = np.array(X)
+        self.isleaf = True
+        self.parent = parentcal
+        self.pred = max(self.yValue, key=self.yValue.count)
+
+    def isLeaf(self):
+        return self.isleaf
+
+    def split(self, paramindex):
+        self.numOfTyp = list()
+        Xchild = list()
+        Ychild = list()
+        self.predictIndex = paramindex
+
+        for i in range(0, len(self.data[:, paramindex])):
+            currentRow = self.data[i, :]
+            info = currentRow[paramindex]
+            if not info in self.numOfTyp:
+                self.numOfTyp.append(info)
+                Xchild.append(list())
+                Ychild.append(list())
+            index = self.numOfTyp.index(info)
+            Xchild[index].append(currentRow)
+            Ychild[index].append(self.yValue[i])
+        self.isleaf = False
+        for i in range(0, len(Xchild)):
+            self.children.append(node(Xchild[i], Ychild[i], self))
+        print("Children: {}".format(len(self.children)))
+        return self.children
+
+    def predict(self, elem):
+        if self.isLeaf():
+            return self.pred
+        else:
+            return self.children[self.numOfTyp.index(elem[self.predictIndex])].predict(elem)
+
+
+def learn(X, y, impurity_measure='entropy'):
+    queue = list()
+    root = node(X, y, None)
+    queue.append(root)
+    n = 0
+    while n < len(queue):
+        features = unique(queue[n].data)
+        ig = infoGains(queue[n].data, queue[n].yValue,
+                       features, impurity_measure)
+
+        for i in range(0, len(features)):
+            if len(features[i]) <= 1:
+                ig[i] = 0
+        igMax = ig.index(max(ig))
+        if max(ig) > 0:
+            lastSplit = queue[n].split(igMax)
+            queue.extend(lastSplit)
+        n = n + 1
+    return root
+
+
+def infoGains(data, y, features, impurity_measure):
+    infoGainList = list()
+    for i in range(0, len(data[0, :])):
+        ig = infoGain(data, y, i, features[i], impurity_measure)
+        infoGainList.append(ig)
+    return infoGainList
+
+
+def infoGain(column, y, index, valTypes, impurity_measure):
+    totalIG = giniEntropyHelper(y.count("e"), y.count("p"), impurity_measure)
+    for valType in valTypes:
+        yes = 0
+        no = 0
+        for i in range(len(column[:, index])):
+            if column[i, index] == valType:
+                if y[i] == "e":
+                    yes = yes + 1
+                else:
+                    no = no + 1
+        totalIG = totalIG - \
+            (yes+no)/len(column[:, index]) * \
+            giniEntropyHelper(yes, no, impurity_measure)
+    return totalIG
+
+
+def giniEntropyHelper(yes, no, impurity_measure):
+    if impurity_measure == 'gini':
+        return gini(yes, no)
+    else:
+        return entropy(yes, no)
+
+
+def entropy(yes, no):
+    numberElem = yes + no
+    if yes == 0 or no == 0:
+        return 0
+    return -yes/numberElem * np.log2(yes/numberElem) - no/numberElem * np.log2(no/numberElem)
+
+
+def gini(yes, no):
+    numberElem = yes + no
+    if yes == 0 or no == 0:
+        return 0
+    return (yes/numberElem * (1 - (yes/numberElem)) + no/numberElem * (1 - (no/numberElem)))
+
+
+def unique(X):
+    features = list()
+    for j in range(0, len(X[0, :])):
+        list1 = X[:, j]
+        uniques = []
+        for elem in list1:
+            if elem not in uniques:
+                uniques.append(elem)
+        features.append(uniques)
+    return features
+
+
+def removeQuestionMark(X):
+    helpList = list()
+    for i in range(0, len(X)):
+        if "?" not in X[i]:
+            helpList.append(X[i])
+    return helpList
+
+
+def splitDataForTraining(X, y):
+    testData = list()
+    trainingData = list()
+    testAnswer = list()
+    trainingAnswer = list()
+    for i in range(0, len(X)):
+        if i % 10 == 0:
+            testData.append(X[i])
+            testAnswer.append(y[i])
+        else:
+            trainingData.append(X[i])
+            trainingAnswer.append(y[i])
+    return trainingData, trainingAnswer, testData, testAnswer
+
+
+def runTestData(algo, testData, testAnswer):
+    correct = 0
+    wrong = 0
+    for i in range(0, len(testAnswer)):
+        if algo.predict(testData[i]) == testAnswer[i]:
+            correct = correct + 1
+        else:
+            wrong = wrong + 1
+    print(correct)
+    print(wrong)
+
+
+with open('mushroom.csv', 'r') as f:
+    reader = csv.reader(f)
+    cont = list(reader)
+    cont = np.array(removeQuestionMark(cont))
+    trainingData, trainingAnswer, testData, testAnswer = splitDataForTraining(
+        cont[:, 1:], list(cont[:, 0]))
+    trainingData = np.array(trainingData)
+    testData = np.array(testData)
+
+learned = learn(trainingData, trainingAnswer, 'entropy')
+runTestData(learned, testData, testAnswer)
+
+
+le = LabelEncoder()
+X_2 = le.fit_transform(trainingData)
+
+enc = OneHotEncoder()
+enc.fit(X_2)
+
+clf = tree.DecisionTreeClassifier()
+clf = clf.fit(enc.get_params, trainingAnswer)
+x = clf.predict(testData[1])
+print(x)

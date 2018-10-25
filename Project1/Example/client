@@ -1,0 +1,24 @@
+import csv
+import numpy as np
+from id3 import tree
+
+X = []
+y = []
+
+with open('wearcoat.data') as csv_file:
+        reader = csv.reader(open("wearcoat.data", "rb"), delimiter=",")
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        y = []
+        for row in csv_reader:
+            y.append(row[0:])
+            X.append(row[0:])
+
+#print(np.transpose(y))
+#print(X)
+
+#for i in X:
+#    print(i)
+
+print(X)
+tree(X, 'sunny')
