@@ -13,7 +13,6 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import ParameterGrid, GridSearchCV
 
-
 def neural_network_training(X_train):
     tf.set_random_seed(19)
     rn.seed(19)
