@@ -11,8 +11,10 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import ParameterGrid, GridSearchCV
 
-def neural_network_training(X_train, X_test, y_train, y_test):
+
+def neural_network_training(X_train):
     tf.set_random_seed(19)
     rn.seed(19)
     np.random.seed(19)
@@ -23,14 +25,14 @@ def neural_network_training(X_train, X_test, y_train, y_test):
     sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
     k.set_session(sess)
 
-    neural(X_train, X_test, y_train, y_test)
+    return neural(X_train)
 
 def create_model(input_dim):
     model = Sequential() # initialize
     model.add(Dense(input_dim, input_dim=input_dim, activation='tanh')) 
-    model.add(Dense(512, activation='relu')) 
-    model.add(Dense(500, activation='relu')) 
-    model.add(Dense(250, activation='relu')) 
+    model.add(Dense(700, activation='relu')) 
+    model.add(Dense(700, activation='relu')) 
+    model.add(Dense(150, activation='relu')) 
     model.add(Dense(10, activation='softmax'))
 
     model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -38,28 +40,11 @@ def create_model(input_dim):
     return model 
 
 
-def neural(X_train, X_test, y_train, y_test):
+def neural(X_train):
     features = X_train.shape[1]
-    keras_model = KerasClassifier(build_fn=create_model, input_dim=features, epochs=15, batch_size=1000)
+    keras_model = KerasClassifier(build_fn=create_model, input_dim=features, epochs=20, batch_size=1500)
     
-    start_time = time.time()
-    keras_model.fit(X_train, y_train)
-    print("Time Neural Network: %0.10f seconds" % (time.time() - start_time))
+    # To perform GridSearch to find optimal parameters
+    #gridSearch(keras_model, X_train, X_test, y_train, y_test)
     
-    y_pred = keras_model.predict(X_test)
-    print("Accuracy: %0.4f " % accuracy_score(y_test, y_pred))
-
-    conf_matrix("Neural Network", y_test, y_pred)
-
-def conf_matrix(name, y_test, y_pred):
-    target_names = [str(x) for x in range(0, 10)]
-    mat = confusion_matrix(y_test, y_pred)
-    sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False,
-            xticklabels= target_names,
-            yticklabels= target_names)
-
-    print(classification_report(y_test, y_pred, target_names=target_names))
-    plt.title(name)
-    plt.xlabel('true label')
-    plt.ylabel('predicted label')
-    plt.show()   
+    return keras_model
