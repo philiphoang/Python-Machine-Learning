@@ -13,11 +13,9 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import ParameterGrid, GridSearchCV
 
-def neural_network_training(X_train):
-    tf.set_random_seed(19)
-    rn.seed(19)
-    np.random.seed(19)
 
+# Mainly used to initialize the algorithm to run on one thread 
+def neural_network_training(X_train):
     session_conf = tf.ConfigProto(
         intra_op_parallelism_threads=1,
         inter_op_parallelism_threads=1)
@@ -26,6 +24,7 @@ def neural_network_training(X_train):
 
     return neural(X_train)
 
+# Create a neural network model
 def create_model(input_dim):
     model = Sequential() # initialize
     model.add(Dense(input_dim, input_dim=input_dim, activation='tanh')) 
@@ -38,12 +37,9 @@ def create_model(input_dim):
  
     return model 
 
-
+# Use Keras Classifier from sklearn to be able to run create confusion matrix and classifier report 
 def neural(X_train):
     features = X_train.shape[1]
     keras_model = KerasClassifier(build_fn=create_model, input_dim=features, epochs=20, batch_size=1500)
-    
-    # To perform GridSearch to find optimal parameters
-    #gridSearch(keras_model, X_train, X_test, y_train, y_test)
     
     return keras_model

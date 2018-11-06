@@ -31,7 +31,7 @@ def fit_and_predict(clf, X_train, X_test, y_train, y_test):
     
     conf_matrix(clf.__class__.__name__, y_test, y_pred)
 
-def randomforest(estimators = 20, features = 5):
+def randomforest(estimators = 45, features = 400):
     rnd_clf = RandomForestClassifier(random_state=42, n_estimators=estimators, max_features=features, n_jobs = -1)
     return rnd_clf
 
@@ -57,7 +57,7 @@ def gridSearchRandomForest(clf, X_train, X_test, y_train, y_test):
         "max_features": [25, 35, 45, 55, 70]
     }]
 
-    grid_clf = GridSearchCV(clf, grid, cv=5, n_jobs = -1)
+    grid_clf = GridSearchCV(clf, grid, cv=5, n_jobs = 1)
     fit_and_predict(grid_clf, X_train, X_test, y_train, y_test)
     print(grid_clf.best_score_)
     print(grid_clf.best_params_)
@@ -68,7 +68,7 @@ def gridSearchNeuralNetwork(clf, X_train, X_test, y_train, y_test):
         "batch_size": [500, 750, 1000, 1250, 1500]
     }]
 
-    grid_clf = GridSearchCV(clf, grid, cv=3, n_jobs = -1)
+    grid_clf = GridSearchCV(clf, grid, cv=5, n_jobs = 1)
     fit_and_predict(grid_clf, X_train, X_test, y_train, y_test)
     print(grid_clf.best_score_)
     print(grid_clf.best_params_)
@@ -97,9 +97,9 @@ print("Time reading data: %0.10f seconds" % (time.time() - start_time))
 y_train = np.ravel(y_train)
 
 # --- Classification model: Neural Network ---
-nn_clf = neural_network_training(X_train)
+#nn_clf = neural_network_training(X_train)
 #gridSearchNeuralNetwork(nn_clf,  X_train, X_test, y_train, y_test)
-fit_and_predict(nn_clf, X_train, X_test, y_train, y_test)
+#fit_and_predict(nn_clf, X_train, X_test, y_train, y_test)
 
 # --- Classification model: Random Forest  ---
 rnd_clf = randomforest()
@@ -107,4 +107,4 @@ rnd_clf = randomforest()
 fit_and_predict(rnd_clf, X_train, X_test, y_train, y_test)
 
 # --- Classification models: ---
-naive_bayes(X_train, X_test, y_train, y_test)
+#naive_bayes(X_train, X_test, y_train, y_test)
